@@ -14,28 +14,28 @@ interpreter = {'AE':AE.interp, 'WAE':WAE.interp, 'FWAE':FWAE.interp, 'FAE':FAE.i
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('sexp', nargs='+', help='s-expression')
+    parser.add_argument('expr', nargs='+', help='s-expression')
     parser.add_argument('-p', action='store_true', help='enable a parser only')
     parser.add_argument('-lang', type=str, default='AE', help='which language?')
     args = parser.parse_args()
 
-    args.sexp = ' '.join(args.sexp)
+    args.expr = ' '.join(args.expr)
     
     if args.p:
-        print(parse(args.sexp, args.lang.upper()))
+        print(parse(args.expr, args.lang.upper()))
     else:
-        print(run(args.sexp, args.lang.upper()))
+        print(run(args.expr, args.lang.upper()))
 
-def run(sexp, lang):
-    sexp = parse(sexp, lang)
-    sexp = interp(sexp, lang)
-    return sexp
+def run(expr, lang):
+    expr = parse(expr, lang)
+    expr = interp(expr, lang)
+    return expr
 
-def parse(sexp, lang):
-    return parser[lang](sexp)
+def parse(expr, lang):
+    return parser[lang](expr)
 
-def interp(sexp, lang):
-    return interpreter[lang](sexp)
+def interp(expr, lang):
+    return interpreter[lang](expr)
     
 if __name__ == '__main__':
     main()
