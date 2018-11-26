@@ -14,10 +14,12 @@ interpreter = {'AE':AE.interp, 'WAE':WAE.interp, 'FWAE':FWAE.interp, 'FAE':FAE.i
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('sexp', help='s-expression')
+    parser.add_argument('sexp', nargs='+', help='s-expression')
     parser.add_argument('-p', action='store_true', help='enable a parser only')
     parser.add_argument('-lang', type=str, default='AE', help='which language?')
     args = parser.parse_args()
+
+    args.sexp = ' '.join(args.sexp)
     
     if args.p:
         print(parse(args.sexp, args.lang.upper()))
