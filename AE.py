@@ -40,13 +40,11 @@ def parse(expr):
             if expr[0] == '(':
                 token_ = []
                 temp = ''
-                cnt = 0
                 concat = 0
                 for s in expr[2:-1]:
                     if s == ' ' and concat <= 0:
                         token_.append(temp)
                         temp = ''
-                        cnt += 1
                     elif s == '(':
                         concat += 1
                         temp += '('
@@ -60,8 +58,8 @@ def parse(expr):
                     return Add(parse(token_[1]), parse(token_[2]))
             elif len(token_) == 3 and token_[0] == '-':
                     return Sub(parse(token_[1]), parse(token_[2]))
-            else:
-                raise Exception
+
+            raise Exception
 
         except:
             sys.exit('parse: bad syntax: %s' % expr)

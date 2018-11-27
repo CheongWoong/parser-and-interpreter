@@ -9,9 +9,9 @@ class WAE():
         elif type(self) == Sub:
             return '(sub %s %s)' % (self.lhs, self.rhs)
         elif type(self) == With:
-            return '(with (%s %s) %s)' % (self.name, self.body, self.expr)
+            return '(with %s %s %s)' % (self.name, self.body, self.expr)
         elif type(self) == Id:
-            return 
+            return '(id %s)' % self.name
 
 class Num(WAE):
     def __init__(self, num):
@@ -38,44 +38,50 @@ class Id(WAE):
         self.name = name
 
 def parse(expr):
+    expr = expr.replace('{', '(').replace('}', ')')
+    expr = expr.replace('[', '(').replace(']', ')')
+    expr = expr.replace('(', '( ').replace('  ', ' ')
+    expr = expr.replace('(', ' (').replace('  ', ' ')
+    expr = expr.replace(')', ') ').replace('  ', ' ')
+    expr = expr.replace(')', ' )').replace('  ', ' ')
     expr = expr.lstrip().rstrip()
-    expr = expr.replace('{', '(')
-    expr = expr.replace('[', '(')
-    expr = expr.replace('}', ')')
-    expr = expr.replace(']', ')')
-    
+
     try:
         return Num(int(expr))
-    
+
     except:
         try:
-            if expr[:3] == '( +' or expr[:2] == '(+' or expr[:3] == '( -' or expr[:2] == '(-':
-                n = 2 if expr[1] == ' ' else 1
-                op = expr[n]
-                
-                cnt = 0
-                hs = [None, '', '']
+            if expr[0] == '(' and expr[-1] == ')':
+                token_ = []
+                temp = ''
                 concat = 0
-                for s in expr[n+1:-1]:
+                for s in expr[2:-1]:
                     if s == ' ' and concat <= 0:
-                        cnt += 1
+                        token_.append(temp)
+                        temp = ''
                     elif s == '(':
                         concat += 1
-                        hs[cnt] += '(' 
+                        temp += '('
                     elif s == ')':
                         concat -= 1
-                        hs[cnt] += ')' 
+                        temp += ')'
                     else:
-                        hs[cnt] = hs[cnt] + s
-                    
-                if op == '+':
-                    return Add(parse(hs[1]), parse(hs[2]))
-                else:
-                    return Sub(parse(hs[1]), parse(hs[2]))
-                
-            else:
-                raise Exception
-            
+                        temp = temp + s
+
+                if len(token_) == 3 and token_[0] == '+':
+                    return Add(parse(token_[1]), parse(token_[2]))
+                elif len(token_) == 3 and token_[0] == '-':
+                    return Sub(parse(token_[1]), parse(token_[2]))
+                elif len(token_) == 3 and token_[0] == 'with' and len(parse(token_[1])) == 2:
+                    return With(parse(token_[1])[0], parse(token_[1])[1], parse(token_[2]))
+                elif len(token_) == 2:
+                    return [token_[0], parse(token_[1])]
+
+            if True: #need to set the condition
+                return Id(expr)
+
+            raise Exception
+
         except:
             sys.exit('parse: bad syntax: %s' % expr)
 
@@ -86,6 +92,5 @@ def interp(ae):
         return interp(ae.lhs) + interp(ae.rhs)
     elif type(ae) == Sub:
         return interp(ae.lhs) - interp(ae.rhs)
-        
-    return expr
 
+    return expr
