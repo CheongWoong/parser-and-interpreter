@@ -35,7 +35,6 @@ class With(WAE):
         self.v = v
         self.e = e
         if type(parse(self.i)) != Id:
-            print(type(parse(self.i)))
             return Exception
 
 class Id(WAE):
