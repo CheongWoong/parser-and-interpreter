@@ -35,8 +35,6 @@ def parse(expr, lang):
     return parser[lang](expr)
 
 def interp(expr, lang):
-    if lang == 'FAE':
-        return interpreter[lang](expr, FAE.mtSub())
     return interpreter[lang](expr)
 
 if __name__ == '__main__':

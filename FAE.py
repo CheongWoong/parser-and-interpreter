@@ -115,7 +115,7 @@ def parse(expr):
         except:
             sys.exit('parse: bad syntax: %s' % expr)
 
-def interp(fae, ds):
+def interp(fae, ds=mtSub()):
     if type(fae) == Num:
         return NumV(fae.num)
     elif type(fae) == Add:
