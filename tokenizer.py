@@ -23,5 +23,7 @@ def tokenize(expr):
                 temp += ')'
             else:
                 temp = temp + s
+        return token_
 
-    return token_
+    else:
+        return None

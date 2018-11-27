@@ -50,5 +50,3 @@ def interp(ae):
         return interp(ae.lhs) + interp(ae.rhs)
     elif type(ae) == Sub:
         return interp(ae.lhs) - interp(ae.rhs)
-
-    return expr
