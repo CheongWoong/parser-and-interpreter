@@ -7,7 +7,7 @@ def tokenize(expr):
     expr = expr.replace(')', ' )').replace('  ', ' ')
     expr = expr.lstrip().rstrip()
 
-    if expr[0] == '(' and expr[-1] == ')':
+    if expr[0] == '(' and expr[-1] == ')' and expr.count('(') == expr.count(')'):
         token_ = []
         temp = ''
         concat = 0

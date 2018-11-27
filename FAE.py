@@ -62,7 +62,6 @@ class ClosureV(FAE_Value):
         if type(parse(self.param)) != Id:
             return Exception
 
-
 class DefrdSub():
     pass
 
@@ -106,6 +105,8 @@ def parse(expr):
                     return App(parse(token_[0]), parse(token_[1]))
                 elif len(token_) == 3 and token_[0] == 'fun' and len(tokenize(token_[1])) == 1:
                     return Fun(tokenize(token_[1])[0], parse(token_[2]))
+                elif len(token_) == 1 and token_[0] == 'mtSub':
+                    return mtSub()
 
             elif len(expr.split()) == 1:
                 return Id(expr)
