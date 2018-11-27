@@ -1,5 +1,7 @@
 import sys
 
+from tokenizer import tokenize
+
 class AE():
     def __str__(self):
         if type(self) == Num:
@@ -24,40 +26,17 @@ class Sub(AE):
         self.rhs = rhs
 
 def parse(expr):
-    expr = expr.replace('{', '(').replace('}', ')')
-    expr = expr.replace('[', '(').replace(']', ')')
-    expr = expr.replace('(', '( ').replace('  ', ' ')
-    expr = expr.replace('(', ' (').replace('  ', ' ')
-    expr = expr.replace(')', ') ').replace('  ', ' ')
-    expr = expr.replace(')', ' )').replace('  ', ' ')
-    expr = expr.lstrip().rstrip()
-
     try:
         return Num(int(expr))
 
     except:
         try:
-            if expr[0] == '(':
-                token_ = []
-                temp = ''
-                concat = 0
-                for s in expr[2:-1]:
-                    if s == ' ' and concat <= 0:
-                        token_.append(temp)
-                        temp = ''
-                    elif s == '(':
-                        concat += 1
-                        temp += '('
-                    elif s == ')':
-                        concat -= 1
-                        temp += ')'
-                    else:
-                        temp = temp + s
+            token_ = tokenize(expr)
 
             if len(token_) == 3 and token_[0] == '+':
-                    return Add(parse(token_[1]), parse(token_[2]))
+                return Add(parse(token_[1]), parse(token_[2]))
             elif len(token_) == 3 and token_[0] == '-':
-                    return Sub(parse(token_[1]), parse(token_[2]))
+                return Sub(parse(token_[1]), parse(token_[2]))
 
             raise Exception
 
