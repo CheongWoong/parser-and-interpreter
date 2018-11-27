@@ -24,44 +24,45 @@ class Sub(AE):
         self.rhs = rhs
 
 def parse(expr):
+    expr = expr.replace('{', '(').replace('}', ')')
+    expr = expr.replace('[', '(').replace(']', ')')
+    expr = expr.replace('(', '( ').replace('  ', ' ')
+    expr = expr.replace('(', ' (').replace('  ', ' ')
+    expr = expr.replace(')', ') ').replace('  ', ' ')
+    expr = expr.replace(')', ' )').replace('  ', ' ')
     expr = expr.lstrip().rstrip()
-    expr = expr.replace('{', '(')
-    expr = expr.replace('[', '(')
-    expr = expr.replace('}', ')')
-    expr = expr.replace(']', ')')
-    
+
     try:
         return Num(int(expr))
-    
+
     except:
         try:
-            if expr[:3] == '( +' or expr[:2] == '(+' or expr[:3] == '( -' or expr[:2] == '(-':
-                n = 2 if expr[1] == ' ' else 1
-                op = expr[n]
-                
+            if expr[0] == '(':
+                token_ = []
+                temp = ''
                 cnt = 0
-                hs = [None, '', '']
                 concat = 0
-                for s in expr[n+1:-1]:
+                for s in expr[2:-1]:
                     if s == ' ' and concat <= 0:
+                        token_.append(temp)
+                        temp = ''
                         cnt += 1
                     elif s == '(':
                         concat += 1
-                        hs[cnt] += '(' 
+                        temp += '('
                     elif s == ')':
                         concat -= 1
-                        hs[cnt] += ')' 
+                        temp += ')'
                     else:
-                        hs[cnt] = hs[cnt] + s
-                    
-                if op == '+':
-                    return Add(parse(hs[1]), parse(hs[2]))
-                else:
-                    return Sub(parse(hs[1]), parse(hs[2]))
-                
+                        temp = temp + s
+
+            if len(token_) == 3 and token_[0] == '+':
+                    return Add(parse(token_[1]), parse(token_[2]))
+            elif len(token_) == 3 and token_[0] == '-':
+                    return Sub(parse(token_[1]), parse(token_[2]))
             else:
                 raise Exception
-            
+
         except:
             sys.exit('parse: bad syntax: %s' % expr)
 
@@ -72,6 +73,5 @@ def interp(ae):
         return interp(ae.lhs) + interp(ae.rhs)
     elif type(ae) == Sub:
         return interp(ae.lhs) - interp(ae.rhs)
-        
-    return expr
 
+    return expr
