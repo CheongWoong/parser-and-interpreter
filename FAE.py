@@ -10,6 +10,8 @@ class FAE():
             return '(add %s %s)' % (self.lhs, self.rhs)
         elif type(self) == Sub:
             return '(sub %s %s)' % (self.lhs, self.rhs)
+        elif type(self) == Mul:
+            return '(mul %s %s)' % (self.lhs, self.rhs)
         elif type(self) == Id:
             return '(id %s)' % self.name
         elif type(self) == Fun:
@@ -31,6 +33,11 @@ class Sub(FAE):
         self.lhs = lhs
         self.rhs = rhs
 
+class Mul(FAE):
+    def __init__(self, lhs, rhs):
+        self.lhs = lhs
+        self.rhs = rhs
+
 class Id(FAE):
     def __init__(self, name):
         self.name = name
@@ -48,7 +55,9 @@ class App(FAE):
         self.arg = arg
 
 class FAE_Value():
-    pass
+    def __str__(self):
+        if type(self) == NumV:
+            return '(numV %s)' % self.n
 
 class NumV(FAE_Value):
     def __init__(self, n):
@@ -96,6 +105,8 @@ def parse(expr):
                     return Add(parse(token_[1]), parse(token_[2]))
                 elif len(token_) == 3 and token_[0] == '-':
                     return Sub(parse(token_[1]), parse(token_[2]))
+                elif len(token_) == 3 and token_[0] == '*':
+                    return Mul(parse(token_[1]), parse(token_[2]))
                 elif len(token_) == 3 and token_[0] == 'with' and len(tokenize(token_[1])) == 2:
                     i = tokenize(token_[1])[0]
                     v = tokenize(token_[1])[1]
@@ -120,9 +131,11 @@ def interp(fae, ds=mtSub()):
     if type(fae) == Num:
         return NumV(fae.num)
     elif type(fae) == Add:
-        return interp(fae.lhs, ds).n + interp(fae.rhs, ds).n
+        return NumV(interp(fae.lhs, ds).n + interp(fae.rhs, ds))
     elif type(fae) == Sub:
-        return interp(fae.lhs, ds).n - interp(fae.rhs, ds).n
+        return NumV(interp(fae.lhs, ds).n - interp(fae.rhs, ds).n)
+    elif type(fae) == Mul:
+        return NumV(interp(fae.lhs, ds).n * interp(fae.rhs, ds).n)
     elif type(fae) == Id:
         return lookup(fae.name, ds)
     elif type(fae) == Fun:

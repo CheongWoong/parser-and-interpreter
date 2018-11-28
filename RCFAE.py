@@ -10,6 +10,8 @@ class RCFAE():
             return '(add %s %s)' % (self.lhs, self.rhs)
         elif type(self) == Sub:
             return '(sub %s %s)' % (self.lhs, self.rhs)
+        elif type(self) == Mul:
+            return '(mul %s %s)' % (self.lhs, self.rhs)
         elif type(self) == Id:
             return '(id %s)' % self.name
         elif type(self) == Fun:
@@ -31,6 +33,11 @@ class Add(RCFAE):
         self.rhs = rhs
 
 class Sub(RCFAE):
+    def __init__(self, lhs, rhs):
+        self.lhs = lhs
+        self.rhs = rhs
+
+class Mul(FAE):
     def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
@@ -66,7 +73,7 @@ class Rec(RCFAE):
 class RCFAE_Value():
     def __str__(self):
         if type(self) == NumV:
-            return '(num %s)' % self.n
+            return '(numV %s)' % self.n
 
 class NumV(RCFAE_Value):
     def __init__(self, n):
@@ -122,6 +129,8 @@ def parse(expr):
                     return Add(parse(token_[1]), parse(token_[2]))
                 elif len(token_) == 3 and token_[0] == '-':
                     return Sub(parse(token_[1]), parse(token_[2]))
+                elif len(token_) == 3 and token_[0] == '*':
+                    return Mul(parse(token_[1]), parse(token_[2]))
                 elif len(token_) == 3 and token_[0] == 'with' and len(tokenize(token_[1])) == 2:
                     i = tokenize(token_[1])[0]
                     v = tokenize(token_[1])[1]
@@ -153,6 +162,8 @@ def interp(rcfae, ds=mtSub()):
         return interp(rcfae.lhs, ds).n + interp(rcfae.rhs, ds).n
     elif type(rcfae) == Sub:
         return interp(rcfae.lhs, ds).n - interp(rcfae.rhs, ds).n
+    elif type(fae) == Mul:
+        return NumV(interp(fae.lhs, ds).n * interp(fae.rhs, ds).n)
     elif type(rcfae) == Id:
         return lookup(rcfae.name, ds)
     elif type(rcfae) == Fun:
