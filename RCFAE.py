@@ -159,9 +159,9 @@ def interp(rcfae, ds=mtSub()):
     if type(rcfae) == Num:
         return NumV(rcfae.num)
     elif type(rcfae) == Add:
-        return interp(rcfae.lhs, ds).n + interp(rcfae.rhs, ds).n
+        return NumV(interp(rcfae.lhs, ds).n + interp(rcfae.rhs, ds).n)
     elif type(rcfae) == Sub:
-        return interp(rcfae.lhs, ds).n - interp(rcfae.rhs, ds).n
+        return NumV(interp(rcfae.lhs, ds).n - interp(rcfae.rhs, ds).n)
     elif type(fae) == Mul:
         return NumV(interp(fae.lhs, ds).n * interp(fae.rhs, ds).n)
     elif type(rcfae) == Id:
