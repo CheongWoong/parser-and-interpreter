@@ -72,7 +72,7 @@ def parse(expr):
                     e = token_[2]
                     return With(i, parse(v), parse(e))
 
-            elif len(expr.split()) == 1:
+            elif len(expr.split()) == 1 and expr[0].isalpha():
                 return Id(expr)
 
             raise Exception

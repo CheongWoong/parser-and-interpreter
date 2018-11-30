@@ -119,7 +119,7 @@ def parse(expr):
                 elif len(token_) == 1 and token_[0] == 'mtSub':
                     return mtSub()
 
-            elif len(expr.split()) == 1:
+            elif len(expr.split()) == 1 and expr[0].isalpha():
                 return Id(expr)
 
             raise Exception

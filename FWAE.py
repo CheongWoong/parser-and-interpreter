@@ -96,7 +96,7 @@ def parse(expr):
                 elif len(token_) == 3 and token_[0] == 'fun' and len(tokenize(token_[1])) == 1:
                     return Fun(tokenize(token_[1])[0], parse(token_[2]))
 
-            elif len(expr.split()) == 1:
+            elif len(expr.split()) == 1 and expr[0].isalpha():
                 return Id(expr)
 
             raise Exception
