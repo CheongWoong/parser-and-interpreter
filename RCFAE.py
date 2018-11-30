@@ -93,8 +93,8 @@ class DefrdSub():
     pass
 
 class mtSub(DefrdSub):
-    def __init__(self):
-        pass
+    def __str__(self):
+        return '(mtSub)'
 
 class aSub(DefrdSub):
     def __init__(self, name, value, ds):
@@ -142,8 +142,6 @@ def parse(expr):
                     return App(parse(token_[0]), parse(token_[1]))
                 elif len(token_) == 3 and token_[0] == 'fun' and len(tokenize(token_[1])) == 1:
                     return Fun(tokenize(token_[1])[0], parse(token_[2]))
-                elif len(token_) == 1 and token_[0] == 'mtSub':
-                    return mtSub()
                 elif len(token_) == 4 and token_[0] == 'if0':
                     return If0(parse(token_[1]), parse(token_[2]), parse(token_[3]))
                 elif len(token_) == 3 and token_[0] == 'rec' and len(tokenize(token_[1])) == 2:
