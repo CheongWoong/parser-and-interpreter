@@ -37,7 +37,7 @@ class Sub(RCFAE):
         self.lhs = lhs
         self.rhs = rhs
 
-class Mul(FAE):
+class Mul(RCFAE):
     def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
@@ -69,6 +69,8 @@ class Rec(RCFAE):
         self.name = name
         self.expr = expr
         self.first = first
+        if type(parse(self.name)) != Id:
+            return Exception
 
 class RCFAE_Value():
     def __str__(self):
@@ -162,8 +164,8 @@ def interp(rcfae, ds=mtSub()):
         return NumV(interp(rcfae.lhs, ds).n + interp(rcfae.rhs, ds).n)
     elif type(rcfae) == Sub:
         return NumV(interp(rcfae.lhs, ds).n - interp(rcfae.rhs, ds).n)
-    elif type(fae) == Mul:
-        return NumV(interp(fae.lhs, ds).n * interp(fae.rhs, ds).n)
+    elif type(rcfae) == Mul:
+        return NumV(interp(rcfae.lhs, ds).n * interp(rcfae.rhs, ds).n)
     elif type(rcfae) == Id:
         return lookup(rcfae.name, ds)
     elif type(rcfae) == Fun:
@@ -173,9 +175,9 @@ def interp(rcfae, ds=mtSub()):
         a_val = interp(rcfae.arg, ds)
         return interp(f_val.body, aSub(f_val.param, a_val, f_val.ds))
     elif type(rcfae) == If0:
-        return interp(rcfae.then, ds) if interp(rcfae.test, ds) == 0 else interp(rcfae.els, ds)
+        return interp(rcfae.then, ds) if interp(rcfae.test, ds).n == 0 else interp(rcfae.els, ds)
     elif type(rcfae) == Rec:
-        value_holder = 198
+        value_holder = NumV(0)
         new_ds = aRecSub(rcfae.name, value_holder, ds)
-        value_holder = interp(rcfae.expr, new_ds)
+        new_ds.box = interp(rcfae.expr, new_ds)
         return interp(rcfae.first, new_ds)
