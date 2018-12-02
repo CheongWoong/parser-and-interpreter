@@ -1,6 +1,7 @@
 import sys
 
 from tokenizer import tokenize
+import RCFAE
 
 class RBMRCFAE():
     def __str__(self):
@@ -316,12 +317,14 @@ def interp(rbmrcfae, ds=mtSub(), st=mtSto()):
         if type(temp) == V_S:
             return V_S(temp.value, aSto(a, temp.value, temp.store))
     elif type(rbmrcfae) == If0:
-        return interp(rbmrcfae.then, ds) if interp(rbmrcfae.test, ds).n == 0 else interp(rbmrcfae.els, ds)
+        return interp(rbmrcfae.then, ds, st) if interp(rbmrcfae.test, ds, st).n == 0 else interp(rbmrcfae.els, ds, st)
     elif type(rbmrcfae) == Rec:
         value_holder = NumV(0)
         new_ds = aRecSub(rbmrcfae.name, value_holder, ds)
-        new_ds.box = interp(rbmrcfae.expr, new_ds)
-        return interp(rbmrcfae.first, new_ds)
+        new_ds.box = RCFAE.interp(rbmrcfae.expr, new_ds)
+        value = RCFAE.interp(rbmrcfae.first, new_ds)
+        value = NumV(value.n)
+        return V_S(value, st)
 
 def interp_two(expr1, expr2, ds, st, handle):
     temp = interp(expr1, ds, st)

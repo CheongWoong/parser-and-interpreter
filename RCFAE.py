@@ -1,6 +1,7 @@
 import sys
 
 from tokenizer import tokenize
+import RBMRCFAE
 
 class RCFAE():
     def __str__(self):
@@ -111,11 +112,11 @@ class aRecSub(DefrdSub):
         self.ds = ds
 
 def lookup(name, ds):
-    if type(ds) == mtSub:
+    if type(ds) == mtSub or type(ds) == RBMRCFAE.mtSub:
         sys.exit('error: lookup: free identifier')
-    elif type(ds) == aSub:
+    elif type(ds) == aSub or type(ds) == RBMRCFAE.aSub:
         return ds.value if ds.name == name else lookup(name, ds.ds)
-    elif type(ds) == aRecSub:
+    elif type(ds) == aRecSub or type(ds) == RBMRCFAE.aRecSub:
         return ds.box if ds.name == name else lookup(name, ds.ds)
 
 def parse(expr):
@@ -156,25 +157,25 @@ def parse(expr):
             sys.exit('parse: bad syntax: %s' % expr)
 
 def interp(rcfae, ds=mtSub()):
-    if type(rcfae) == Num:
+    if type(rcfae) == Num or type(rcfae) == RBMRCFAE.Num:
         return NumV(rcfae.num)
-    elif type(rcfae) == Add:
+    elif type(rcfae) == Add or type(rcfae) == RBMRCFAE.Add:
         return NumV(interp(rcfae.lhs, ds).n + interp(rcfae.rhs, ds).n)
-    elif type(rcfae) == Sub:
+    elif type(rcfae) == Sub or type(rcfae) == RBMRCFAE.Sub:
         return NumV(interp(rcfae.lhs, ds).n - interp(rcfae.rhs, ds).n)
-    elif type(rcfae) == Mul:
+    elif type(rcfae) == Mul or type(rcfae) == RBMRCFAE.Mul:
         return NumV(interp(rcfae.lhs, ds).n * interp(rcfae.rhs, ds).n)
-    elif type(rcfae) == Id:
+    elif type(rcfae) == Id or type(rcfae) == RBMRCFAE.Id:
         return lookup(rcfae.name, ds)
-    elif type(rcfae) == Fun:
+    elif type(rcfae) == Fun or type(rcfae) == RBMRCFAE.Fun:
         return ClosureV(rcfae.param, rcfae.body, ds)
-    elif type(rcfae) == App:
+    elif type(rcfae) == App or type(rcfae) == RBMRCFAE.App:
         f_val = interp(rcfae.ftn, ds)
         a_val = interp(rcfae.arg, ds)
         return interp(f_val.body, aSub(f_val.param, a_val, f_val.ds))
-    elif type(rcfae) == If0:
+    elif type(rcfae) == If0 or type(rcfae) == RBMRCFAE.If0:
         return interp(rcfae.then, ds) if interp(rcfae.test, ds).n == 0 else interp(rcfae.els, ds)
-    elif type(rcfae) == Rec:
+    elif type(rcfae) == Rec or type(rcfae) == RBMRCFAE.Rec:
         value_holder = NumV(0)
         new_ds = aRecSub(rcfae.name, value_holder, ds)
         new_ds.box = interp(rcfae.expr, new_ds)
