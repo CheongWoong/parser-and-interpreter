@@ -129,7 +129,7 @@ def interp(fae, ds=mtSub()):
     if type(fae) == Num:
         return NumV(fae.num)
     elif type(fae) == Add:
-        return NumV(interp(fae.lhs, ds).n + interp(fae.rhs, ds))
+        return NumV(interp(fae.lhs, ds).n + interp(fae.rhs, ds).n)
     elif type(fae) == Sub:
         return NumV(interp(fae.lhs, ds).n - interp(fae.rhs, ds).n)
     elif type(fae) == Mul:

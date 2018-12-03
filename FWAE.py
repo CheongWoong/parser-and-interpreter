@@ -67,7 +67,7 @@ def subst(fwae, idtf, val):
     elif type(fwae) == With:
         return With(fwae.i, subst(fwae.v, idtf, val), fwae.e if fwae.i == idtf else subst(fwae.e, idtf, val))
     elif type(fwae) == Id:
-        return Num(val) if fwae.name == idtf else fwae
+        return val if fwae.name == idtf else fwae
     elif type(fwae) == App:
         return App(subst(fwae.ftn, idtf, val), subst(fwae.arg, idtf, val))
     elif type(fwae) == Fun:
@@ -106,11 +106,11 @@ def parse(expr):
 
 def interp(fwae):
     if type(fwae) == Num:
-        return fwae.num
+        return fwae
     elif type(fwae) == Add:
-        return interp(fwae.lhs) + interp(fwae.rhs)
+        return Num(interp(fwae.lhs).num + interp(fwae.rhs).num)
     elif type(fwae) == Sub:
-        return interp(fwae.lhs) - interp(fwae.rhs)
+        return Num(interp(fwae.lhs).num - interp(fwae.rhs).num)
     elif type(fwae) == With:
         return interp(subst(fwae.e, fwae.i, interp(fwae.v)))
     elif type(fwae) == Id:
