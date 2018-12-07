@@ -121,7 +121,9 @@ class RBMRCFAE_Value():
     def __str__(self):
         if type(self) == NumV:
             return '(numV %s)' % self.n
-        if type(self) == RefclosV:
+        elif type(self) == ClosureV:
+            return '(closureV %s %s %s)' % (self.param, self.body, self.ds)
+        elif type(self) == RefclosV:
             return '(refclosV %s %s %s)' % (self.param, self.body, self.ds)
 
 class NumV(RBMRCFAE_Value):
@@ -149,11 +151,16 @@ class BoxV(RBMRCFAE_Value):
         self.address = int(address)
 
 class DefrdSub():
-    pass
+    def __str__(self):
+        if type(self) == mtSub:
+            return '(mtSub)'
+        elif type(self) == aSub:
+            return '(aSub %s %s %s)' % (self.name, self.address, self.ds)
+        elif type(self) == aRecSub:
+            return '(aRecSub %s %s %s)' % (self.name, self.box, self.ds)
 
 class mtSub(DefrdSub):
-    def __str__(self):
-        return '(mtSub)'
+    pass
 
 class aSub(DefrdSub):
     def __init__(self, name, address, ds):
@@ -174,7 +181,7 @@ class Store():
         if type(self) == mtSto:
             return '(mtSto)'
         elif type(self) == aSto:
-            return '(aSto %s %s %s)' % (str(self.address), str(self.value), str(self.rest))
+            return '(aSto %s %s %s)' % (self.address, self.value, self.rest)
 
 class mtSto(Store):
     pass
@@ -187,7 +194,7 @@ class aSto(Store):
 
 class Value_Store():
     def __str__(self):
-        return '(v*s %s %s)' % (str(self.value), str(self.store))
+        return '(v*s %s %s)' % (self.value, self.store)
 
 class V_S(Value_Store):
     def __init__(self, value, store):
@@ -203,6 +210,8 @@ def lookup(name, ds):
         return ds.box if ds.name == name else lookup(name, ds.ds)
 
 def store_lookup(address, sto):
+    if type(address) == V_S:
+        return address.value
     if type(sto) == mtSto:
         sys.exit('error: store_lookup: No value at address')
     elif type(sto) == aSto:
@@ -270,11 +279,11 @@ def interp(rbmrcfae, ds=mtSub(), st=mtSto()):
     if type(rbmrcfae) == Num:
         return V_S(NumV(rbmrcfae.num), st)
     elif type(rbmrcfae) == Add:
-        return interp_two(rbmrcfae.lhs, rbmrcfae.rhs, ds, st, lambda a, b, c: V_S(a.n + b.n, c))
+        return interp_two(rbmrcfae.lhs, rbmrcfae.rhs, ds, st, lambda a, b, c: V_S(NumV(a.n + b.n), c))
     elif type(rbmrcfae) == Sub:
-        return interp_two(rbmrcfae.lhs, rbmrcfae.rhs, ds, st, lambda a, b, c: V_S(a.n - b.n, c))
+        return interp_two(rbmrcfae.lhs, rbmrcfae.rhs, ds, st, lambda a, b, c: V_S(NumV(a.n - b.n), c))
     elif type(rbmrcfae) == Mul:
-        return interp_two(rbmrcfae.lhs, rbmrcfae.rhs, ds, st, lambda a, b, c: V_S(a.n * b.n, c))
+        return interp_two(rbmrcfae.lhs, rbmrcfae.rhs, ds, st, lambda a, b, c: V_S(NumV(a.n * b.n), c))
     elif type(rbmrcfae) == Id:
         return V_S(store_lookup(lookup(rbmrcfae.name, ds), st), st)
     elif type(rbmrcfae) == Fun:
@@ -301,8 +310,8 @@ def interp(rbmrcfae, ds=mtSub(), st=mtSto()):
     elif type(rbmrcfae) == Newbox:
         temp = interp(rbmrcfae.v, ds, st)
         if type(temp) == V_S:
-            a = malloc(temp.st)
-            return V_S(BoxV(a), aSto(a, temp.v, temp.st))
+            a = malloc(temp.store)
+            return V_S(BoxV(a), aSto(a, temp.value, temp.store))
     elif type(rbmrcfae) == Setbox:
         return interp_two(rbmrcfae.bn, rbmrcfae.v, ds, st, lambda a, b, c: V_S(b, aSto(a.address, b, c)))
     elif type(rbmrcfae) == Openbox:
@@ -317,14 +326,12 @@ def interp(rbmrcfae, ds=mtSub(), st=mtSto()):
         if type(temp) == V_S:
             return V_S(temp.value, aSto(a, temp.value, temp.store))
     elif type(rbmrcfae) == If0:
-        return interp(rbmrcfae.then, ds, st) if interp(rbmrcfae.test, ds, st).n == 0 else interp(rbmrcfae.els, ds, st)
+        return interp(rbmrcfae.then, ds, st) if interp(rbmrcfae.test, ds, st).value.n == 0 else interp(rbmrcfae.els, ds, st)
     elif type(rbmrcfae) == Rec:
-        value_holder = NumV(0)
-        new_ds = aRecSub(rbmrcfae.name, value_holder, ds)
-        new_ds.box = RCFAE.interp(rbmrcfae.expr, new_ds)
-        value = RCFAE.interp(rbmrcfae.first, new_ds)
-        value = NumV(value.n)
-        return V_S(value, st)
+        new_ds = aRecSub(rbmrcfae.name, NumV(0), ds)
+        new_ds.box = malloc(st)
+        new_st = aSto(new_ds.box, interp(rbmrcfae.expr, new_ds, st).value, st)
+        return interp(rbmrcfae.first, new_ds, new_st)
 
 def interp_two(expr1, expr2, ds, st, handle):
     temp = interp(expr1, ds, st)
