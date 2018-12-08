@@ -178,5 +178,4 @@ def interp(rcfae, ds=mtSub()):
         value_holder = NumV(0)
         new_ds = aRecSub(rcfae.name, value_holder, ds)
         new_ds.box = interp(rcfae.expr, new_ds)
-        print(new_ds.box.body)
         return interp(rcfae.first, new_ds)

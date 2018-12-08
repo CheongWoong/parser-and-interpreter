@@ -2,7 +2,7 @@ import sys
 
 from tokenizer import tokenize
 
-class RBMRCFAE():
+class LRBMRCFAE():
     def __str__(self):
         if type(self) == Num:
             return '(num %s)' % self.num
@@ -35,48 +35,48 @@ class RBMRCFAE():
         elif type(self) == Seqn:
             return '(seqn %s %s)' % (self.ex1, self.ex2)
 
-class Num(RBMRCFAE):
+class Num(LRBMRCFAE):
     def __init__(self, num):
         self.num = num
 
-class Add(RBMRCFAE):
+class Add(LRBMRCFAE):
     def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
 
-class Sub(RBMRCFAE):
+class Sub(LRBMRCFAE):
     def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
 
-class Mul(RBMRCFAE):
+class Mul(LRBMRCFAE):
     def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
 
-class Id(RBMRCFAE):
+class Id(LRBMRCFAE):
     def __init__(self, name):
         self.name = name
 
-class Fun(RBMRCFAE):
+class Fun(LRBMRCFAE):
     def __init__(self, param, body):
         self.param = param
         self.body = body
         if type(parse(self.param)) != Id:
             return Exception
 
-class App(RBMRCFAE):
+class App(LRBMRCFAE):
     def __init__(self, ftn, arg):
         self.ftn = ftn
         self.arg = arg
 
-class If0(RBMRCFAE):
+class If0(LRBMRCFAE):
     def __init__(self, test, then, els):
         self.test = test
         self.then = then
         self.els = els
 
-class Rec(RBMRCFAE):
+class Rec(LRBMRCFAE):
     def __init__(self, name, expr, first):
         self.name = name
         self.expr = expr
@@ -84,39 +84,39 @@ class Rec(RBMRCFAE):
         if type(parse(self.name)) != Id:
             return Exception
 
-class Refun(RBMRCFAE):
+class Refun(LRBMRCFAE):
     def __init__(self, param, body):
         self.param = param
         self.body = body
         if type(parse(self.param)) != Id:
             return Exception
 
-class Setvar(RBMRCFAE):
+class Setvar(LRBMRCFAE):
     def __init__(self, name, v):
         self.name = name
         self.v = v
         if type(parse(self.name)) != Id:
             return Exception
 
-class Newbox(RBMRCFAE):
+class Newbox(LRBMRCFAE):
     def __init__(self, v):
         self.v = v
 
-class Setbox(RBMRCFAE):
+class Setbox(LRBMRCFAE):
     def __init__(self, bn, v):
         self.bn = bn
         self.v = v
 
-class Openbox(RBMRCFAE):
+class Openbox(LRBMRCFAE):
     def __init__(self, v):
         self.v = v
 
-class Seqn(RBMRCFAE):
+class Seqn(LRBMRCFAE):
     def __init__(self, ex1, ex2):
         self.ex1 = ex1
         self.ex2 = ex2
 
-class RBMRCFAE_Value():
+class LRBMRCFAE_Value():
     def __str__(self):
         if type(self) == NumV:
             return '(numV %s)' % self.n
@@ -126,12 +126,14 @@ class RBMRCFAE_Value():
             return '(refclosV %s %s %s)' % (self.param, self.body, self.ds)
         elif type(self) == BoxV:
             return '(boxV %s)' % (self.address)
+        elif type(self) == ExprV:
+            return '(exprV %s %s %s %s)' % (self.expr, self.ds, self.st, self.value)
 
-class NumV(RBMRCFAE_Value):
+class NumV(LRBMRCFAE_Value):
     def __init__(self, n):
         self.n = n
 
-class ClosureV(RBMRCFAE_Value):
+class ClosureV(LRBMRCFAE_Value):
     def __init__(self, param, body, ds):
         self.param = param
         self.body = body
@@ -139,7 +141,7 @@ class ClosureV(RBMRCFAE_Value):
         if type(parse(self.param)) != Id:
             return Exception
 
-class RefclosV(RBMRCFAE_Value):
+class RefclosV(LRBMRCFAE_Value):
     def __init__(self, param, body, ds):
         self.param = param
         self.body = body
@@ -147,9 +149,16 @@ class RefclosV(RBMRCFAE_Value):
         if type(parse(self.param)) != Id:
             return Exception
 
-class BoxV(RBMRCFAE_Value):
+class BoxV(LRBMRCFAE_Value):
     def __init__(self, address):
         self.address = int(address)
+
+class ExprV(LRBMRCFAE_Value):
+    def __init__(self, expr, ds, st, value):
+        self.expr = expr
+        self.ds = ds
+        self.st = st
+        self.value = value
 
 class DefrdSub():
     def __str__(self):
@@ -201,6 +210,17 @@ class V_S(Value_Store):
     def __init__(self, value, store):
         self.value = value
         self.store = store
+
+def strict(v):
+    if type(v) == ExprV:
+        if v.value == False:
+            tv = strict(interp(v.expr, v.ds, v.st))
+            v.value = tv
+        return v.value
+    elif type(v) == V_S:
+        return v.value
+    else:
+        return v
 
 def lookup(name, ds):
     if type(ds) == mtSub:
@@ -276,62 +296,61 @@ def parse(expr):
         except:
             sys.exit('parse: bad syntax: %s' % expr)
 
-def interp(rbmrcfae, ds=mtSub(), st=mtSto()):
-    if type(rbmrcfae) == Num:
-        return V_S(NumV(rbmrcfae.num), st)
-    elif type(rbmrcfae) == Add:
-        return interp_two(rbmrcfae.lhs, rbmrcfae.rhs, ds, st, lambda a, b, c: V_S(NumV(a.n + b.n), c))
-    elif type(rbmrcfae) == Sub:
-        return interp_two(rbmrcfae.lhs, rbmrcfae.rhs, ds, st, lambda a, b, c: V_S(NumV(a.n - b.n), c))
-    elif type(rbmrcfae) == Mul:
-        return interp_two(rbmrcfae.lhs, rbmrcfae.rhs, ds, st, lambda a, b, c: V_S(NumV(a.n * b.n), c))
-    elif type(rbmrcfae) == Id:
-        return V_S(store_lookup(lookup(rbmrcfae.name, ds), st), st)
-    elif type(rbmrcfae) == Fun:
-        return V_S(ClosureV(rbmrcfae.param, rbmrcfae.body, ds), st)
-    elif type(rbmrcfae) == Refun:
-        return V_S(RefclosV(rbmrcfae.param, rbmrcfae.body, ds), st)
-    elif type(rbmrcfae) == App:
-        temp = interp(rbmrcfae.ftn, ds, st)
+def interp(lrbmrcfae, ds=mtSub(), st=mtSto()):
+    if type(lrbmrcfae) == Num:
+        return V_S(NumV(lrbmrcfae.num), st)
+    elif type(lrbmrcfae) == Add:
+        return interp_two(lrbmrcfae.lhs, lrbmrcfae.rhs, ds, st, lambda a, b, c: V_S(NumV(strict(a).n + strict(b).n), c))
+    elif type(lrbmrcfae) == Sub:
+        return interp_two(lrbmrcfae.lhs, lrbmrcfae.rhs, ds, st, lambda a, b, c: V_S(NumV(strict(a).n - strict(b).n), c))
+    elif type(lrbmrcfae) == Mul:
+        return interp_two(lrbmrcfae.lhs, lrbmrcfae.rhs, ds, st, lambda a, b, c: V_S(NumV(strict(a).n * strict(b).n), c))
+    elif type(lrbmrcfae) == Id:
+        return V_S(store_lookup(lookup(lrbmrcfae.name, ds), st), st)
+    elif type(lrbmrcfae) == Fun:
+        return V_S(ClosureV(lrbmrcfae.param, lrbmrcfae.body, ds), st)
+    elif type(lrbmrcfae) == Refun:
+        return V_S(RefclosV(lrbmrcfae.param, lrbmrcfae.body, ds), st)
+    elif type(lrbmrcfae) == App:
+        temp = interp(lrbmrcfae.ftn, ds, st)
         if type(temp) == V_S:
-            f_value = temp.value
+            f_value = strict(temp.value)
             f_store = temp.store
             if type(f_value) == ClosureV:
-                temp2 = interp(rbmrcfae.arg, ds, f_store)
-                if type(temp2) == V_S:
-                    a_value = temp2.value
-                    a_store = temp2.store
-                    new_address = malloc(a_store)
-                    return interp(f_value.body, aSub(f_value.param, new_address, f_value.ds), aSto(new_address, a_value, a_store))
+                temp2 = ExprV(lrbmrcfae.arg, ds, st, False)
+                a_value = temp2
+                a_store = temp2.st
+                new_address = malloc(a_store)
+                return interp(f_value.body, aSub(f_value.param, new_address, f_value.ds), aSto(new_address, a_value, a_store))
             elif type(f_value) == RefclosV:
-                address = lookup(rbmrcfae.arg.name, ds)
+                address = lookup(lrbmrcfae.arg.name, ds)
                 return interp(f_value.body, aSub(f_value.param, address, f_value.ds), f_store)
             else:
                 sys.exit('error: interp: trying to apply a number')
-    elif type(rbmrcfae) == Newbox:
-        temp = interp(rbmrcfae.v, ds, st)
+    elif type(lrbmrcfae) == Newbox:
+        temp = interp(lrbmrcfae.v, ds, st)
         if type(temp) == V_S:
             a = malloc(temp.store)
             return V_S(BoxV(a), aSto(a, temp.value, temp.store))
-    elif type(rbmrcfae) == Setbox:
-        return interp_two(rbmrcfae.bn, rbmrcfae.v, ds, st, lambda a, b, c: V_S(b, aSto(a.address, b, c)))
-    elif type(rbmrcfae) == Openbox:
-        temp = interp(rbmrcfae.v, ds, st)
+    elif type(lrbmrcfae) == Setbox:
+        return interp_two(lrbmrcfae.bn, lrbmrcfae.v, ds, st, lambda a, b, c: V_S(b, aSto(a.address, b, c)))
+    elif type(lrbmrcfae) == Openbox:
+        temp = interp(lrbmrcfae.v, ds, st)
         if type(temp) == V_S:
             return V_S(store_lookup(temp.value.address, temp.store), temp.store)
-    elif type(rbmrcfae) == Seqn:
-        return interp_two(rbmrcfae.ex1, rbmrcfae.ex2, ds, st, lambda a, b, c: V_S(b, c))
-    elif type(rbmrcfae) == Setvar:
-        a = lookup(rbmrcfae.name, ds)
-        temp = interp(rbmrcfae.v, ds, st)
+    elif type(lrbmrcfae) == Seqn:
+        return interp_two(lrbmrcfae.ex1, lrbmrcfae.ex2, ds, st, lambda a, b, c: V_S(b, c))
+    elif type(lrbmrcfae) == Setvar:
+        a = lookup(lrbmrcfae.name, ds)
+        temp = interp(lrbmrcfae.v, ds, st)
         if type(temp) == V_S:
             return V_S(temp.value, aSto(a, temp.value, temp.store))
-    elif type(rbmrcfae) == If0:
-        return interp(rbmrcfae.then, ds, st) if interp(rbmrcfae.test, ds, st).value.n == 0 else interp(rbmrcfae.els, ds, st)
-    elif type(rbmrcfae) == Rec:
-        new_ds = aRecSub(rbmrcfae.name, NumV(0), ds)
-        new_ds.box = interp(rbmrcfae.expr, new_ds, st)
-        return interp(rbmrcfae.first, new_ds, st)
+    elif type(lrbmrcfae) == If0:
+        return interp(lrbmrcfae.then, ds, st) if interp(lrbmrcfae.test, ds, st).value.n == 0 else interp(lrbmrcfae.els, ds, st)
+    elif type(lrbmrcfae) == Rec:
+        new_ds = aRecSub(lrbmrcfae.name, NumV(0), ds)
+        new_ds.box = interp(lrbmrcfae.expr, new_ds, st)
+        return interp(lrbmrcfae.first, new_ds, st)
 
 def interp_two(expr1, expr2, ds, st, handle):
     temp = interp(expr1, ds, st)

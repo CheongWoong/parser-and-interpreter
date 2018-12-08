@@ -6,11 +6,12 @@ import FWAE
 import FAE
 import RCFAE
 import RBMRCFAE
+import LRBMRCFAE
 
 parser = {'AE':AE.parse, 'WAE':WAE.parse, 'FWAE':FWAE.parse, 'FAE':FAE.parse,
-              'RCFAE':RCFAE.parse, 'RBMRCFAE':RBMRCFAE.parse}
+              'RCFAE':RCFAE.parse, 'RBMRCFAE':RBMRCFAE.parse, 'LRBMRCFAE':LRBMRCFAE.parse}
 interpreter = {'AE':AE.interp, 'WAE':WAE.interp, 'FWAE':FWAE.interp, 'FAE':FAE.interp,
-                   'RCFAE':RCFAE.interp, 'RBMRCFAE':RBMRCFAE.interp}
+                   'RCFAE':RCFAE.interp, 'RBMRCFAE':RBMRCFAE.interp, 'LRBMRCFAE':LRBMRCFAE.interp}
 
 def main():
     parser = argparse.ArgumentParser()
